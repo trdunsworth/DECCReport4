@@ -1108,10 +1108,19 @@ if (!is.null(current_week_phone)) {
   numeric_cols <- names(current_week_phone)[!names(current_week_phone) %in% c("DateTime", "Hour")]
   current_week_phone[numeric_cols] <- lapply(current_week_phone[numeric_cols], as.numeric)
   
-  # Calculate key metrics
+  # Calculate key metrics using T_RECD and T_AB if available, otherwise fall back to old columns
+  if ("T_RECD" %in% names(current_week_phone)) {
+    total_phone_calls <- sum(current_week_phone$T_RECD, na.rm = TRUE)
+    total_abandoned <- sum(current_week_phone$T_AB, na.rm = TRUE)
+    total_answered <- total_phone_calls - total_abandoned
+  } else {
+    total_phone_calls <- sum(current_week_phone$Total, na.rm = TRUE)
+    total_abandoned <- sum(current_week_phone$`911_AB`, na.rm = TRUE) + sum(current_week_phone$ADM_AB, na.rm = TRUE)
+    total_answered <- total_phone_calls - total_abandoned
+  }
+  
   total_911_calls <- sum(current_week_phone$`911_T`, na.rm = TRUE)
   total_admin_calls <- sum(current_week_phone$ADM_T, na.rm = TRUE)
-  total_phone_calls <- sum(current_week_phone$Total, na.rm = TRUE)
   
   avg_911_pct_10 <- mean(current_week_phone$`911_PCT_10`, na.rm = TRUE) * 100
   avg_911_pct_15 <- mean(current_week_phone$`911_PCT_15`, na.rm = TRUE) * 100
@@ -1173,7 +1182,13 @@ if (phone_data_available) {
   cat(paste0("- **9-1-1 Abandoned:** ", format(total_911_abandoned, big.mark = ","), 
              " (", round(pct_911_abandoned, 2), "% of 9-1-1 calls)\n"))
   cat(paste0("- **Administrative Abandoned:** ", format(total_adm_abandoned, big.mark = ","), 
-             " (", round(pct_adm_abandoned, 2), "% of admin calls)\n\n"))
+             " (", round(pct_adm_abandoned, 2), "% of admin calls)\n"))
+  if (exists("total_abandoned") && total_abandoned > 0) {
+    cat(paste0("- **Total Abandoned (All Lines):** ", format(total_abandoned, big.mark = ","), 
+               " (", round((total_abandoned/total_phone_calls)*100, 2), "% of all calls)\n\n"))
+  } else {
+    cat("\n")
+  }
   
   # Performance assessment
   if (avg_911_pct_10 >= 90) {
@@ -1449,13 +1464,27 @@ build_phone_weekly_summary <- function(phone_df, week_num, week_start) {
   num_cols <- setdiff(names(phone_df), c("DateTime", "Hour"))
   phone_df[num_cols] <- lapply(phone_df[num_cols], function(x) suppressWarnings(as.numeric(x)))
   
-  total_911 <- sum(phone_df$`911_T`, na.rm = TRUE)
-  abandoned_911 <- sum(phone_df$`911_AB`, na.rm = TRUE)
-  abandoned_admin <- sum(phone_df$`ADM_AB`, na.rm = TRUE)
-  abandoned_total <- abandoned_911 + abandoned_admin
-  answered_911 <- total_911 - abandoned_911
+  # Use T_AB for abandoned totals if available
+  if ("T_AB" %in% names(phone_df)) {
+    abandoned_total <- sum(phone_df$T_AB, na.rm = TRUE)
+  } else {
+    # Legacy calculation from individual AB columns
+    abandoned_911 <- sum(phone_df$`911_AB`, na.rm = TRUE)
+    abandoned_admin <- sum(phone_df$`ADM_AB`, na.rm = TRUE)
+    abandoned_total <- abandoned_911 + abandoned_admin
+  }
   
-  if (answered_911 <= 0) return(NULL)
+  # Calculate total calls and answered calls
+  if ("T_RECD" %in% names(phone_df)) {
+    total_calls <- sum(phone_df$T_RECD, na.rm = TRUE)
+    answered_calls <- total_calls - abandoned_total
+  } else {
+    total_911 <- sum(phone_df$`911_T`, na.rm = TRUE)
+    answered_calls <- total_911 - sum(phone_df$`911_AB`, na.rm = TRUE)
+    total_calls <- total_911
+  }
+  
+  if (answered_calls <= 0) return(NULL)
   
   within_10 <- sum(phone_df$`911_10`, na.rm = TRUE)
   within_15 <- within_10 + sum(phone_df$`911_15`, na.rm = TRUE)
@@ -1464,18 +1493,16 @@ build_phone_weekly_summary <- function(phone_df, week_num, week_start) {
   tibble(
     week_num = week_num,
     week_start = week_start,
-    total_911 = total_911,
-    answered_911 = answered_911,
-    abandoned_911 = abandoned_911,
-    abandoned_admin = abandoned_admin,
+    total_calls = total_calls,
+    answered_calls = answered_calls,
     abandoned_total = abandoned_total,
-    abandoned_pct = (abandoned_911 / total_911) * 100,
+    abandoned_pct = (abandoned_total / total_calls) * 100,
     within_10 = within_10,
     within_15 = within_15,
     within_20 = within_20,
-    pct_10 = (within_10 / answered_911) * 100,
-    pct_15 = (within_15 / answered_911) * 100,
-    pct_20 = (within_20 / answered_911) * 100
+    pct_10 = (within_10 / answered_calls) * 100,
+    pct_15 = (within_15 / answered_calls) * 100,
+    pct_20 = (within_20 / answered_calls) * 100
   )
 }
 
@@ -1600,13 +1627,20 @@ if (!is.null(phone_trends_df) && nrow(phone_trends_df) > 0) {
 #| fig-height: 6
 
 if (!is.null(phone_trends_df) && nrow(phone_trends_df) > 0) {
-  # Ensure proper ordering by week_start
-  phone_trends_plot <- phone_trends_df %>% arrange(week_start)
+  # Ensure proper ordering by week_start and verify data
+  phone_trends_plot <- phone_trends_df %>% 
+    arrange(week_start) %>%
+    mutate(week_label_ordered = factor(week_label, levels = unique(week_label)))
   
-  p_abandoned_count <- ggplot(phone_trends_plot, aes(x = reorder(week_label, week_start), y = abandoned_total)) +
-    geom_col(fill = "#8B0000", width = 0.6, alpha = 0.85) +
+  # Get max value for consistent y-axis scaling
+  max_abandoned <- max(phone_trends_plot$abandoned_total, na.rm = TRUE)
+  
+  p_abandoned_count <- ggplot(phone_trends_plot, aes(x = week_label_ordered, y = abandoned_total)) +
+    geom_col(fill = "#8B0000", width = 0.7, alpha = 0.85) +
     geom_text(aes(label = scales::comma(abandoned_total)),
-              vjust = -0.3, size = 3.5, fontface = "bold", color = "#8B0000") +
+              vjust = -0.5, size = 3.5, fontface = "bold", color = "#8B0000") +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.1)), 
+                       limits = c(0, max_abandoned * 1.1)) +
     labs(title = "Total Abandoned Calls (9-1-1 + Admin) – Counts",
          x = "Week",
          y = "Abandoned Call Count") +
