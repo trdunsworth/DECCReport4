@@ -1,7 +1,7 @@
 ---
 title: "DECC Weekly Report"
 author: "Tony Dunsworth, PhD"
-date: "2025-12-22"
+date: "2025-12-29"
 format:
     html:
         toc: true
@@ -12,7 +12,7 @@ execute:
   echo: false
 ---
 
-## Week 51 from 14 December through 20 December 2025
+## Week 52 from 21 December through 27 December 2025
 
 ## Table of Contents
 
@@ -1272,7 +1272,8 @@ if (!is.null(current_week_phone) && nrow(current_week_phone) > 0) {
       dt_parsed = suppressWarnings(lubridate::ymd_hms(DateTime, quiet = TRUE)),
       dow_lab = lubridate::wday(dt_parsed, label = TRUE, abbr = TRUE, week_start = 7),
       DOW = factor(toupper(as.character(dow_lab)),
-                   levels = c("SUN","MON","TUE","WED","THU","FRI","SAT"), ordered = TRUE)
+           levels = c("SAT", "FRI", "THU", "WED", "TUE", "MON", "SUN"),
+           ordered = TRUE)
     ) %>%
     dplyr::filter(!is.na(Hour_numeric), !is.na(DOW))
 
@@ -1464,39 +1465,28 @@ build_phone_weekly_summary <- function(phone_df, week_num, week_start) {
   num_cols <- setdiff(names(phone_df), c("DateTime", "Hour"))
   phone_df[num_cols] <- lapply(phone_df[num_cols], function(x) suppressWarnings(as.numeric(x)))
   
-  # Use T_AB for abandoned totals if available
-  if ("T_AB" %in% names(phone_df)) {
-    abandoned_total <- sum(phone_df$T_AB, na.rm = TRUE)
-  } else {
-    # Legacy calculation from individual AB columns
-    abandoned_911 <- sum(phone_df$`911_AB`, na.rm = TRUE)
-    abandoned_admin <- sum(phone_df$`ADM_AB`, na.rm = TRUE)
-    abandoned_total <- abandoned_911 + abandoned_admin
-  }
-  
-  # Calculate total calls and answered calls
-  if ("T_RECD" %in% names(phone_df)) {
-    total_calls <- sum(phone_df$T_RECD, na.rm = TRUE)
-    answered_calls <- total_calls - abandoned_total
-  } else {
-    total_911 <- sum(phone_df$`911_T`, na.rm = TRUE)
-    answered_calls <- total_911 - sum(phone_df$`911_AB`, na.rm = TRUE)
-    total_calls <- total_911
-  }
+  # Use 911_T and 911_AB columns (matching compute_phone_metrics for consistency)
+  total_calls <- sum(phone_df$`911_T`, na.rm = TRUE)
+  abandoned_911 <- sum(phone_df$`911_AB`, na.rm = TRUE)
+  answered_calls <- total_calls - abandoned_911
   
   if (answered_calls <= 0) return(NULL)
   
+  # Calculate answer time percentages for 911 calls
   within_10 <- sum(phone_df$`911_10`, na.rm = TRUE)
   within_15 <- within_10 + sum(phone_df$`911_15`, na.rm = TRUE)
   within_20 <- within_15 + sum(phone_df$`911_20`, na.rm = TRUE)
+  
+  # Calculate abandoned percentage (911 only, for consistency)
+  abandoned_pct <- (abandoned_911 / total_calls) * 100
   
   tibble(
     week_num = week_num,
     week_start = week_start,
     total_calls = total_calls,
     answered_calls = answered_calls,
-    abandoned_total = abandoned_total,
-    abandoned_pct = (abandoned_total / total_calls) * 100,
+    abandoned_total = abandoned_911,
+    abandoned_pct = abandoned_pct,
     within_10 = within_10,
     within_15 = within_15,
     within_20 = within_20,
@@ -1556,11 +1546,12 @@ if (!is.null(phone_trends_df) && nrow(phone_trends_df) > 0) {
   
   # Reshape for plotting
   volume_data <- phone_trends_df %>%
-    dplyr::select(week_label, week_start, total_911, answered_911) %>%
-    pivot_longer(cols = c(total_911, answered_911), names_to = "metric", values_to = "count") %>%
+    mutate(week_label = paste0("Week ", week_num)) %>%
+    dplyr::select(week_label, week_start, total_calls, answered_calls) %>%
+    pivot_longer(cols = c(total_calls, answered_calls), names_to = "metric", values_to = "count") %>%
     mutate(metric_label = case_when(
-      metric == "total_911" ~ "Total 9-1-1 Calls",
-      metric == "answered_911" ~ "Answered Calls"
+      metric == "total_calls" ~ "Total Calls",
+      metric == "answered_calls" ~ "Answered Calls"
     ))
   
   pct_data <- phone_trends_df %>%
@@ -1571,9 +1562,9 @@ if (!is.null(phone_trends_df) && nrow(phone_trends_df) > 0) {
     geom_text(aes(label = scales::comma(count)), 
               position = position_dodge(width = 0.7), 
               vjust = -0.3, size = 3) +
-    scale_fill_manual(values = c("Total 9-1-1 Calls" = palette_cyan_base[8], 
+    scale_fill_manual(values = c("Total Calls" = palette_cyan_base[8], 
                                    "Answered Calls" = palette_blue_base[7])) +
-    labs(title = "9-1-1 Call Volumes Over Last 4 Weeks",
+    labs(title = "Call Volumes Over Last 4 Weeks",
          x = "Week",
          y = "Call Count",
          fill = "Metric") +
@@ -4819,17 +4810,17 @@ tryCatch({
     median_time_to_dispatch_afd <- median_time_to_dispatch
 
     median_processing_time <- summary_table |>
-      filter(Variable == "Processing_Time") |>
+      filter(Variable == "Processing Time") |>
       pull(Median)
     median_processing_time_afd <- median_processing_time
 
     median_phone_time <- summary_table |>
-      filter(Variable == "Phone_Time") |>
+      filter(Variable == "Phone Time") |>
       pull(Median)
     median_phone_time_afd <- median_phone_time
 
     mean_phone_time <- summary_table |>
-      filter(Variable == "Phone_Time") |>
+      filter(Variable == "Phone Time") |>
       pull(Mean)
     mean_phone_time_afd <- mean_phone_time
 
@@ -5256,12 +5247,12 @@ tryCatch({
     median_time_to_dispatch_ems <- median_time_to_dispatch
 
     median_processing_time <- summary_table |>
-      filter(Variable == "Processing_Time") |>
+      filter(Variable == "Processing Time") |>
       pull(Median)
     median_processing_time_ems <- median_processing_time
 
     median_phone_time <- summary_table |>
-      filter(Variable == "Phone_Time") |>
+      filter(Variable == "Phone Time") |>
       pull(Median)
     median_phone_time_ems <- median_phone_time
 
@@ -8415,7 +8406,12 @@ p_priority <- ggplot(priority_data, aes(x = TTQ_capped, y = TTD_capped, color = 
   geom_smooth(method = "lm", se = TRUE, alpha = 0.2) +
   facet_wrap(~ Priority_Number, ncol = 2, 
              labeller = labeller(Priority_Number = function(x) paste("Priority", x))) +
-  scale_color_viridis_d(option = "plasma") +
+  scale_color_manual(values = c(
+    "1" = "#1b9e77",  # teal/green
+    "2" = "#7570b3",  # purple
+    "3" = "#d95f02",  # orange (darker)
+    "4" = "#e7298a"   # magenta for strong contrast on white
+  )) +
   labs(
     title = "Time to Queue vs Time to Dispatch by Priority Level",
     subtitle = "Priority 1 = Highest urgency; Priority 4 = Routine",
