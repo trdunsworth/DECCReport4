@@ -1,7 +1,7 @@
 ---
 title: "DECC Weekly Report"
 author: "Tony Dunsworth, PhD"
-date: "2025-12-29"
+date: "2026-01-05"
 format:
     html:
         toc: true
@@ -12,7 +12,7 @@ execute:
   echo: false
 ---
 
-## Week 52 from 21 December through 27 December 2025
+## Week 01 from 28 December 2025 through 04 January 2026
 
 ## Table of Contents
 
@@ -237,14 +237,14 @@ current_week_start <- report_week_start - weeks(1)
 current_week_end <- current_week_start + days(6)
 # Use the middle of the week (Wednesday) to get accurate ISO week number
 current_week_num <- isoweek(current_week_start + days(3))
-current_year <- year(current_week_start)
+current_year <- isoyear(current_week_start + days(3))
 
 # The COMPARISON week is one week before the current week
 last_week_start <- current_week_start - weeks(1)
 last_week_end <- last_week_start + days(6)
 # Use the middle of the week (Wednesday) to get accurate ISO week number
 last_week_num <- isoweek(last_week_start + days(3))
-last_year <- year(last_week_start)
+last_year <- isoyear(last_week_start + days(3))
 
 # Store week numbers for use throughout the document
 WEEK_NUMBER <- current_week_num
@@ -267,17 +267,19 @@ LAST_WEEK_END_FORMATTED <- format(LAST_WEEK_END_DATE, "%d %b")
 # ============================================================================
 # Function to find and load the correct CSV file for a given week
 load_week_data <- function(week_num, week_year) {
-  # Determine which folder to look in
-  if (week_year == year(REPORT_DATE)) {
-    # Current year - look in data/current_year
+  # Determine which folder to look in based on the week's year
+  if (week_year >= year(REPORT_DATE)) {
+    # Current or future year - look in data/current_year
     base_path <- "data/current_year"
   } else {
     # Prior year - look in data/prior_year
     base_path <- "data/prior_year"
   }
   
-  # Try different naming conventions
+  # Try different naming conventions (including zero-padded)
+  week_num_padded <- sprintf("%02d", week_num)
   possible_files <- c(
+    file.path(base_path, paste0("week", week_num_padded, ".csv")),
     file.path(base_path, paste0("week", week_num, ".csv")),
     file.path(base_path, paste0("Week", week_num, "_", substr(week_year, 3, 4), ".csv")),
     file.path(base_path, paste0("Week", week_num, ".csv")),
@@ -344,17 +346,19 @@ load_week_data <- function(week_num, week_year) {
 # ============================================================================
 # Function to find and load the correct phone CSV file for a given week
 load_phone_data <- function(week_num, week_year) {
-  # Determine which folder to look in
-  if (week_year == year(REPORT_DATE)) {
-    # Current year - look in data/current_year
+  # Determine which folder to look in based on the week's year
+  if (week_year >= year(REPORT_DATE)) {
+    # Current or future year - look in data/current_year
     base_path <- "data/current_year"
   } else {
     # Prior year - look in data/prior_year
     base_path <- "data/prior_year"
   }
   
-  # Try different naming conventions for phone data
+  # Try different naming conventions for phone data (including zero-padded)
+  week_num_padded <- sprintf("%02d", week_num)
   possible_files <- c(
+    file.path(base_path, paste0("week_", week_num_padded, "_phone.csv")),
     file.path(base_path, paste0("week_", week_num, "_phone.csv")),
     file.path(base_path, paste0("Week_", week_num, "_phone.csv")),
     # Fallback: also check root data folder for backwards compatibility
@@ -471,7 +475,7 @@ for (i in 1:4) {
   # Calculate week number and year for this offset
   week_offset_start <- current_week_start - weeks(i)
   week_offset_num <- isoweek(week_offset_start + days(3))
-  week_offset_year <- year(week_offset_start)
+  week_offset_year <- isoyear(week_offset_start + days(3))
   
   cat("Loading week", week_offset_num, "(", week_offset_year, ")\n")
   
@@ -592,7 +596,7 @@ to_ft <- function(tbl, caption = NULL, header_map = NULL, digits = 2) {
 
 ## Introduction
 
-This is the weekly report for week `r WEEK_NUMBER` covering the period from `r WEEK_START_FORMATTED` through `r WEEK_END_FORMATTED` 2025. The report will include analyses of the data to emphasize different information that is contained within the data and may be pertinent to both operations and management.
+This is the weekly report for week `r WEEK_NUMBER` covering the period from `r WEEK_START_FORMATTED` 2025 through `r WEEK_END_FORMATTED` 2026. The report will include analyses of the data to emphasize different information that is contained within the data and may be pertinent to both operations and management.
 
 ```{r}
 #| label: data-processing
@@ -646,7 +650,9 @@ df$ShiftPart <- factor(
 df$Priority_Number <- ordered(df$Priority_Number)
 
 # Convert numeric variables from 'doubles' to integers
-df[c('Time_To_Queue', 'Time_To_Dispatch', 'Phone_Time', 'Processing_Time', 'Rollout_Time', 'Transit_Time', 'Total_Call_Time')] <- sapply(df[c('Time_To_Queue', 'Time_To_Dispatch', 'Phone_Time', 'Processing_Time', 'Rollout_Time', 'Transit_Time', 'Total_Call_Time')], as.numeric)
+df <- df |>
+  mutate(across(c(Time_To_Queue, Time_To_Dispatch, Phone_Time, Processing_Time, 
+                  Rollout_Time, Transit_Time, Total_Call_Time), as.numeric))
 
 # Process last week data for comparison (same transformations)
 df_last <- last_week |>
@@ -670,7 +676,9 @@ df_last$Hour <- as.factor(sprintf("%02d", as.numeric(trimws(df_last$Hour))))
 df_last$DOW <- factor(df_last$DOW, levels = c("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"), ordered = TRUE)
 df_last$ShiftPart <- factor(df_last$ShiftPart, levels = c("EARLY", "MIDS", "LATE"), ordered = TRUE)
 df_last$Priority_Number <- ordered(df_last$Priority_Number)
-df_last[c('Time_To_Queue', 'Time_To_Dispatch', 'Phone_Time', 'Processing_Time', 'Rollout_Time', 'Transit_Time', 'Total_Call_Time')] <- sapply(df_last[c('Time_To_Queue', 'Time_To_Dispatch', 'Phone_Time', 'Processing_Time', 'Rollout_Time', 'Transit_Time', 'Total_Call_Time')], as.numeric)
+df_last <- df_last |>
+  mutate(across(c(Time_To_Queue, Time_To_Dispatch, Phone_Time, Processing_Time, 
+                  Rollout_Time, Transit_Time, Total_Call_Time), as.numeric))
 
 cat("Processing last week data:", nrow(df_last), "rows\n")
 cat("Both weeks ready for analysis and comparison\n")
@@ -1042,7 +1050,6 @@ In order to have a good dataset for analysis, some data cleaning was performed. 
 #| echo: false
 #| warning: false
 #| fig-cap: "Prevalence of missing values. Only columns with missing data are shown."
-#| cache: true
 
 # ...existing code...
 # Count columns with any missing data
@@ -2485,54 +2492,55 @@ weeks_to_analyze <- 4
 historical_data <- list()
 
 for (i in 0:(weeks_to_analyze - 1)) {
-  week_to_load <- current_week_num - i
-  year_to_load <- current_year
+  # Calculate week offset
+  week_offset_start <- current_week_start - weeks(i)
+  week_to_load <- isoweek(week_offset_start + days(3))
+  year_to_load <- isoyear(week_offset_start + days(3))
   
-  # Handle year boundary
-  if (week_to_load < 1) {
-    week_to_load <- week_to_load + 52
-    year_to_load <- year_to_load - 1
-  }
-  
-  data_file <- file.path("data", "current_year", paste0("week", week_to_load, ".csv"))
-  
-  if (file.exists(data_file)) {
-    week_df <- vroom::vroom(
-      data_file,
-      col_types = vroom::cols(.default = "c"),
-      na = c("", "NA", "NULL"),
-      progress = FALSE,
-      show_col_types = FALSE
-    ) %>%
-      dplyr::mutate(
-        week_num = week_to_load,
-        week_year = year_to_load,
-        Time_To_Queue = suppressWarnings(as.numeric(Time_To_Queue)),
-        Time_To_Dispatch = suppressWarnings(as.numeric(Time_To_Dispatch)),
-        Phone_Time = suppressWarnings(as.numeric(Phone_Time)),
-        Processing_Time = suppressWarnings(as.numeric(Processing_Time))
-      )
-    historical_data[[length(historical_data) + 1]] <- week_df
-  }
+  # Try to load using the load_week_data function
+  tryCatch({
+    week_df <- load_week_data(week_to_load, year_to_load)
+    
+    if (!is.null(week_df)) {
+      week_df <- week_df %>%
+        dplyr::mutate(
+          week_num = week_to_load,
+          week_year = year_to_load,
+          Time_To_Queue = suppressWarnings(as.numeric(Time_To_Queue)),
+          Time_To_Dispatch = suppressWarnings(as.numeric(Time_To_Dispatch)),
+          Phone_Time = suppressWarnings(as.numeric(Phone_Time)),
+          Processing_Time = suppressWarnings(as.numeric(Processing_Time))
+        )
+      historical_data[[length(historical_data) + 1]] <- week_df
+    }
+  }, error = function(e) {
+    cat("Warning: Could not load week", week_to_load, "of", year_to_load, "\n")
+  })
 }
 
 # Combine all historical weeks
-df_historical <- bind_rows(historical_data)
-
-# Calculate weekly aggregates
-weekly_metrics <- df_historical %>%
-  group_by(week_num) %>%
-  summarise(
-    total_calls = n(),
-    median_ttq = median(Time_To_Queue, na.rm = TRUE),
-    median_ttd = median(Time_To_Dispatch, na.rm = TRUE),
-    median_phone = median(Phone_Time, na.rm = TRUE),
-    mean_ttq = mean(Time_To_Queue, na.rm = TRUE),
-    mean_ttd = mean(Time_To_Dispatch, na.rm = TRUE),
-    mean_phone = mean(Phone_Time, na.rm = TRUE),
-    .groups = 'drop'
-  ) %>%
-  arrange(week_num)
+if (length(historical_data) > 0) {
+  df_historical <- bind_rows(historical_data)
+  
+  # Calculate weekly aggregates
+  weekly_metrics <- df_historical %>%
+    group_by(week_num) %>%
+    summarise(
+      total_calls = n(),
+      median_ttq = median(Time_To_Queue, na.rm = TRUE),
+      median_ttd = median(Time_To_Dispatch, na.rm = TRUE),
+      median_phone = median(Phone_Time, na.rm = TRUE),
+      mean_ttq = mean(Time_To_Queue, na.rm = TRUE),
+      mean_ttd = mean(Time_To_Dispatch, na.rm = TRUE),
+      mean_phone = mean(Phone_Time, na.rm = TRUE),
+      .groups = 'drop'
+    ) %>%
+    arrange(week_num)
+} else {
+  cat("Warning: No historical data available for trend analysis\n")
+  df_historical <- NULL
+  weekly_metrics <- NULL
+}
 ```
 
 ```{r}
@@ -2542,46 +2550,50 @@ weekly_metrics <- df_historical %>%
 #| fig-width: 12
 #| fig-height: 8
 
-# Create trend visualizations
-p_volume <- ggplot(weekly_metrics, aes(x = week_num, y = total_calls)) +
-  geom_line(linewidth = 1, color = "#2C3E50") +
-  geom_point(size = 2.5, color = "#2C3E50") +
-  geom_text(aes(label = scales::comma(total_calls)), vjust = -1, size = 3) +
-  labs(title = "Call Volume Trend", x = NULL, y = "Total Calls") +
-  scale_y_continuous(labels = scales::comma) +
-  theme_minimal() +
-  theme(plot.title = element_text(size = 11, face = "bold"),
-        axis.text = element_text(size = 9))
+if (!is.null(weekly_metrics) && nrow(weekly_metrics) > 0) {
+  # Create trend visualizations
+  p_volume <- ggplot(weekly_metrics, aes(x = week_num, y = total_calls)) +
+    geom_line(linewidth = 1, color = "#2C3E50") +
+    geom_point(size = 2.5, color = "#2C3E50") +
+    geom_text(aes(label = scales::comma(total_calls)), vjust = -1, size = 3) +
+    labs(title = "Call Volume Trend", x = NULL, y = "Total Calls") +
+    scale_y_continuous(labels = scales::comma) +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 11, face = "bold"),
+          axis.text = element_text(size = 9))
 
-p_ttq <- ggplot(weekly_metrics, aes(x = week_num, y = median_ttq)) +
-  geom_line(linewidth = 1, color = "#3498DB") +
-  geom_point(size = 2.5, color = "#3498DB") +
-  geom_text(aes(label = round(median_ttq, 1)), vjust = -1, size = 3) +
-  labs(title = "Median Time to Queue", x = NULL, y = "Seconds") +
-  theme_minimal() +
-  theme(plot.title = element_text(size = 11, face = "bold"),
-        axis.text = element_text(size = 9))
+  p_ttq <- ggplot(weekly_metrics, aes(x = week_num, y = median_ttq)) +
+    geom_line(linewidth = 1, color = "#3498DB") +
+    geom_point(size = 2.5, color = "#3498DB") +
+    geom_text(aes(label = round(median_ttq, 1)), vjust = -1, size = 3) +
+    labs(title = "Median Time to Queue", x = NULL, y = "Seconds") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 11, face = "bold"),
+          axis.text = element_text(size = 9))
 
-p_ttd <- ggplot(weekly_metrics, aes(x = week_num, y = median_ttd)) +
-  geom_line(linewidth = 1, color = "#E74C3C") +
-  geom_point(size = 2.5, color = "#E74C3C") +
-  geom_text(aes(label = round(median_ttd, 1)), vjust = -1, size = 3) +
-  labs(title = "Median Time to Dispatch", x = "Week Number", y = "Seconds") +
-  theme_minimal() +
-  theme(plot.title = element_text(size = 11, face = "bold"),
-        axis.text = element_text(size = 9))
+  p_ttd <- ggplot(weekly_metrics, aes(x = week_num, y = median_ttd)) +
+    geom_line(linewidth = 1, color = "#E74C3C") +
+    geom_point(size = 2.5, color = "#E74C3C") +
+    geom_text(aes(label = round(median_ttd, 1)), vjust = -1, size = 3) +
+    labs(title = "Median Time to Dispatch", x = "Week Number", y = "Seconds") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 11, face = "bold"),
+          axis.text = element_text(size = 9))
 
-p_phone <- ggplot(weekly_metrics, aes(x = week_num, y = median_phone)) +
-  geom_line(linewidth = 1, color = "#16A085") +
-  geom_point(size = 2.5, color = "#16A085") +
-  geom_text(aes(label = round(median_phone, 1)), vjust = -1, size = 3) +
-  labs(title = "Median Phone Time", x = "Week Number", y = "Seconds") +
-  theme_minimal() +
-  theme(plot.title = element_text(size = 11, face = "bold"),
-        axis.text = element_text(size = 9))
+  p_phone <- ggplot(weekly_metrics, aes(x = week_num, y = median_phone)) +
+    geom_line(linewidth = 1, color = "#16A085") +
+    geom_point(size = 2.5, color = "#16A085") +
+    geom_text(aes(label = round(median_phone, 1)), vjust = -1, size = 3) +
+    labs(title = "Median Phone Time", x = "Week Number", y = "Seconds") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 11, face = "bold"),
+          axis.text = element_text(size = 9))
 
-# Combine plots using patchwork
-(p_volume + p_ttq) / (p_ttd + p_phone)
+  # Combine plots using patchwork
+  (p_volume + p_ttq) / (p_ttd + p_phone)
+} else {
+  cat("*Insufficient historical data for trend visualization.*\n")
+}
 ```
 
 The trend charts above show performance metrics over the last 4 weeks, allowing identification of patterns and emerging issues. Week `r current_week_num` shows `r ifelse(call_volume_change > 0, "an increase", "a decrease")` of `r abs(call_volume_change)` calls compared to week `r last_week_num`.
@@ -2595,34 +2607,38 @@ The trend charts above show performance metrics over the last 4 weeks, allowing 
 #| fig-width: 12
 #| fig-height: 6
 
-# Scale factor for secondary axis
-scale_factor <- max(weekly_metrics$total_calls, na.rm = TRUE) / max(weekly_metrics$median_ttd, na.rm = TRUE)
+if (!is.null(weekly_metrics) && nrow(weekly_metrics) > 0) {
+  # Scale factor for secondary axis
+  scale_factor <- max(weekly_metrics$total_calls, na.rm = TRUE) / max(weekly_metrics$median_ttd, na.rm = TRUE)
 
-ggplot(weekly_metrics, aes(x = week_num)) +
-  # Volume bars
-  geom_col(aes(y = total_calls), fill = "#3498DB", alpha = 0.6, width = 0.8) +
-  # TTD line
-  geom_line(aes(y = median_ttd * scale_factor), color = "#E74C3C", linewidth = 1.5) +
-  geom_point(aes(y = median_ttd * scale_factor), color = "#E74C3C", size = 3) +
-  scale_y_continuous(
-    name = "Total Calls",
-    labels = scales::comma,
-    sec.axis = sec_axis(~ . / scale_factor, name = "Median TTD (seconds)")
-  ) +
-  labs(
-    title = "Call Volume vs Response Time Efficiency",
-    subtitle = "Blue bars: Call volume | Red line: Median Time to Dispatch",
-    x = "Week Number"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(size = 11, hjust = 0.5),
-    axis.title.y.left = element_text(color = "#3498DB", face = "bold", size = 11),
-    axis.title.y.right = element_text(color = "#E74C3C", face = "bold", size = 11),
-    axis.text = element_text(size = 10),
-    axis.title.x = element_text(size = 11, face = "bold")
-  )
+  ggplot(weekly_metrics, aes(x = week_num)) +
+    # Volume bars
+    geom_col(aes(y = total_calls), fill = "#3498DB", alpha = 0.6, width = 0.8) +
+    # TTD line
+    geom_line(aes(y = median_ttd * scale_factor), color = "#E74C3C", linewidth = 1.5) +
+    geom_point(aes(y = median_ttd * scale_factor), color = "#E74C3C", size = 3) +
+    scale_y_continuous(
+      name = "Total Calls",
+      labels = scales::comma,
+      sec.axis = sec_axis(~ . / scale_factor, name = "Median TTD (seconds)")
+    ) +
+    labs(
+      title = "Call Volume vs Response Time Efficiency",
+      subtitle = "Blue bars: Call volume | Red line: Median Time to Dispatch",
+      x = "Week Number"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(size = 11, hjust = 0.5),
+      axis.title.y.left = element_text(color = "#3498DB", face = "bold", size = 11),
+      axis.title.y.right = element_text(color = "#E74C3C", face = "bold", size = 11),
+      axis.text = element_text(size = 10),
+      axis.title.x = element_text(size = 11, face = "bold")
+    )
+} else {
+  cat("*Insufficient historical data for dual-axis trend visualization.*\n")
+}
 ```
 
 This dual-axis chart allows quick visual assessment of whether call volume changes correlate with dispatch efficiency. Inverse relationships (volume ↑, TTD ↑) may indicate capacity constraints.
