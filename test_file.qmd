@@ -1115,36 +1115,49 @@ if (!is.null(current_week_phone)) {
   numeric_cols <- names(current_week_phone)[!names(current_week_phone) %in% c("DateTime", "Hour")]
   current_week_phone[numeric_cols] <- lapply(current_week_phone[numeric_cols], as.numeric)
   
-  # Calculate key metrics using T_RECD and T_AB if available, otherwise fall back to old columns
-  if ("T_RECD" %in% names(current_week_phone)) {
-    total_phone_calls <- sum(current_week_phone$T_RECD, na.rm = TRUE)
-    total_abandoned <- sum(current_week_phone$T_AB, na.rm = TRUE)
-    total_answered <- total_phone_calls - total_abandoned
-  } else {
-    total_phone_calls <- sum(current_week_phone$Total, na.rm = TRUE)
-    total_abandoned <- sum(current_week_phone$`911_AB`, na.rm = TRUE) + sum(current_week_phone$ADM_AB, na.rm = TRUE)
-    total_answered <- total_phone_calls - total_abandoned
-  }
-  
+  # Calculate call totals
   total_911_calls <- sum(current_week_phone$`911_T`, na.rm = TRUE)
   total_admin_calls <- sum(current_week_phone$ADM_T, na.rm = TRUE)
+  total_phone_calls <- total_911_calls + total_admin_calls
   
-  avg_911_pct_10 <- mean(current_week_phone$`911_PCT_10`, na.rm = TRUE) * 100
-  avg_911_pct_15 <- mean(current_week_phone$`911_PCT_15`, na.rm = TRUE) * 100
-  avg_911_pct_20 <- mean(current_week_phone$`911_PCT_20`, na.rm = TRUE) * 100
-  
-  avg_adm_pct_10 <- mean(current_week_phone$ADM_PCT_10, na.rm = TRUE) * 100
-  avg_adm_pct_15 <- mean(current_week_phone$PCT_ADM_15, na.rm = TRUE) * 100
-  avg_adm_pct_20 <- mean(current_week_phone$ADM_PCT_20, na.rm = TRUE) * 100
-  
-  avg_total_pct_10 <- mean(current_week_phone$TTL_PCT_10, na.rm = TRUE) * 100
-  avg_total_pct_15 <- mean(current_week_phone$TTL_PCT_15, na.rm = TRUE) * 100
-  avg_total_pct_20 <- mean(current_week_phone$TTL_PCT_20, na.rm = TRUE) * 100
-  
-  # Calculate abandoned call metrics
+  # Calculate abandoned calls
   total_911_abandoned <- sum(current_week_phone$`911_AB`, na.rm = TRUE)
   total_adm_abandoned <- sum(current_week_phone$ADM_AB, na.rm = TRUE)
+  total_abandoned <- total_911_abandoned + total_adm_abandoned
   
+  # Calculate answered calls
+  answered_911_calls <- total_911_calls - total_911_abandoned
+  answered_admin_calls <- total_admin_calls - total_adm_abandoned
+  total_answered <- total_phone_calls - total_abandoned
+  
+  # Calculate 911 answer time percentages from actual call counts (not mean of percentages)
+  within_911_10 <- sum(current_week_phone$`911_10`, na.rm = TRUE)
+  within_911_15 <- within_911_10 + sum(current_week_phone$`911_15`, na.rm = TRUE)
+  within_911_20 <- within_911_15 + sum(current_week_phone$`911_20`, na.rm = TRUE)
+  
+  avg_911_pct_10 <- if (answered_911_calls > 0) (within_911_10 / answered_911_calls) * 100 else 0
+  avg_911_pct_15 <- if (answered_911_calls > 0) (within_911_15 / answered_911_calls) * 100 else 0
+  avg_911_pct_20 <- if (answered_911_calls > 0) (within_911_20 / answered_911_calls) * 100 else 0
+  
+  # Calculate admin answer time percentages from actual call counts
+  within_adm_10 <- sum(current_week_phone$ADM_10, na.rm = TRUE)
+  within_adm_15 <- within_adm_10 + sum(current_week_phone$ADM_15, na.rm = TRUE)
+  within_adm_20 <- within_adm_15 + sum(current_week_phone$ADM_20, na.rm = TRUE)
+  
+  avg_adm_pct_10 <- if (answered_admin_calls > 0) (within_adm_10 / answered_admin_calls) * 100 else 0
+  avg_adm_pct_15 <- if (answered_admin_calls > 0) (within_adm_15 / answered_admin_calls) * 100 else 0
+  avg_adm_pct_20 <- if (answered_admin_calls > 0) (within_adm_20 / answered_admin_calls) * 100 else 0
+  
+  # Calculate overall answer time percentages from actual call counts
+  within_total_10 <- within_911_10 + within_adm_10
+  within_total_15 <- within_911_15 + within_adm_15
+  within_total_20 <- within_911_20 + within_adm_20
+  
+  avg_total_pct_10 <- if (total_answered > 0) (within_total_10 / total_answered) * 100 else 0
+  avg_total_pct_15 <- if (total_answered > 0) (within_total_15 / total_answered) * 100 else 0
+  avg_total_pct_20 <- if (total_answered > 0) (within_total_20 / total_answered) * 100 else 0
+  
+  # Calculate abandoned call percentages
   pct_911_abandoned <- (total_911_abandoned / total_911_calls) * 100
   pct_adm_abandoned <- (total_adm_abandoned / total_admin_calls) * 100
   
