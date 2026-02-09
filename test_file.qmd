@@ -1,7 +1,7 @@
 ---
 title: "DECC Weekly Report"
 author: "Tony Dunsworth, PhD"
-date: "2026-02-05"
+date: "2026-02-09"
 format:
     html:
         toc: true
@@ -12,7 +12,7 @@ execute:
   echo: false
 ---
 
-## Week 05 from 25 January 2026 through 31 January 2026
+## Week 06 from 01 February 2026 through 07 February 2026
 
 ## Table of Contents
 
