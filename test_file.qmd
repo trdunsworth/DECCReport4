@@ -1,18 +1,17 @@
 ---
 title: "DECC Weekly Report"
 author: "Tony Dunsworth, PhD"
-date: "2026-02-09"
+date: "2026-02-14"
 format:
     html:
         toc: true
         toc-depth: 3
         toc-location: left
+        self-contained: false
 execute:
-  freeze: auto
+  freeze: false
   echo: false
 ---
-
-## Week 06 from 01 February 2026 through 07 February 2026
 
 ## Table of Contents
 
@@ -217,34 +216,99 @@ suppressWarnings({
 #| cache: false
 
 # ============================================================================
+# USER CONFIGURATION - WEEK SELECTION
+# ============================================================================
+# Choose how to determine which week to analyze:
+# 
+# OPTION 1: Automatic (default) - Uses current date to calculate week
+# Set USE_MANUAL_WEEK <- FALSE
+#
+# OPTION 2: Manual - Specify exact week number and year to analyze
+# Set USE_MANUAL_WEEK <- TRUE and set MANUAL_WEEK_NUM and MANUAL_WEEK_YEAR
+
+USE_MANUAL_WEEK <- TRUE        # Set to TRUE to manually specify week
+MANUAL_WEEK_NUM <- 6            # Week number to analyze (1-52)
+MANUAL_WEEK_YEAR <- 2026        # Year of the week to analyze
+
+# ============================================================================
 # AUTOMATED WEEK CALCULATION AND DATA LOADING
 # ============================================================================
 # This chunk automatically determines which weeks to load based on the report date
 # Report covers: week PRIOR to the week containing the report date
 # Comparison uses: week BEFORE the reporting week
 
-# Report date (today's date or override here if needed)
-REPORT_DATE <- Sys.Date()  # Change this to lock to a specific date if needed
-# REPORT_DATE <- as.Date("2025-10-30")  # Example: uncomment to use specific date
-
-# Calculate which week the REPORT_DATE falls into (ISO 8601: weeks start Sunday)
-report_week_start <- floor_date(REPORT_DATE, "week", week_start = 7)  # 7 = Sunday
-report_week_num <- isoweek(report_week_start)
-report_year <- year(report_week_start)
-
-# The week we're REPORTING ON is the week PRIOR to the report week
-current_week_start <- report_week_start - weeks(1)
-current_week_end <- current_week_start + days(6)
-# Use the middle of the week (Wednesday) to get accurate ISO week number
-current_week_num <- isoweek(current_week_start + days(3))
-current_year <- isoyear(current_week_start + days(3))
-
-# The COMPARISON week is one week before the current week
-last_week_start <- current_week_start - weeks(1)
-last_week_end <- last_week_start + days(6)
-# Use the middle of the week (Wednesday) to get accurate ISO week number
-last_week_num <- isoweek(last_week_start + days(3))
-last_year <- isoyear(last_week_start + days(3))
+if (USE_MANUAL_WEEK) {
+  # Manual mode: Use user-specified week
+  cat("=== MANUAL WEEK SELECTION MODE ===\n")
+  cat("Using manually specified week:", MANUAL_WEEK_NUM, "of year", MANUAL_WEEK_YEAR, "\n\n")
+  
+  # Set current week values directly from manual input
+  current_week_num <- MANUAL_WEEK_NUM
+  current_year <- MANUAL_WEEK_YEAR
+  
+  # Calculate the actual start/end dates for display purposes
+  # ISO week 1 is the week containing the first Thursday of the year
+  jan1 <- as.Date(paste0(MANUAL_WEEK_YEAR, "-01-01"))
+  jan1_dow <- wday(jan1, week_start = 7)  # 1 = Sunday, 7 = Saturday
+  
+  # Find the first Sunday of ISO week 1
+  days_to_first_sunday <- (7 - jan1_dow + 1) %% 7
+  if (wday(jan1 + days(4 - days_to_first_sunday), week_start = 7) == 5) {  # Check if Thursday is in first week
+    first_sunday <- jan1 + days(days_to_first_sunday)
+  } else {
+    first_sunday <- jan1 + days(days_to_first_sunday + 7)
+  }
+  
+  current_week_start <- first_sunday + weeks(MANUAL_WEEK_NUM - 1)
+  current_week_end <- current_week_start + days(6)
+  
+  # Calculate comparison week (one week before) - simple arithmetic
+  if (MANUAL_WEEK_NUM > 1) {
+    last_week_num <- MANUAL_WEEK_NUM - 1
+    last_year <- MANUAL_WEEK_YEAR
+  } else {
+    # Week 1 wraps to previous year's last week (usually 52, sometimes 53)
+    last_year <- MANUAL_WEEK_YEAR - 1
+    # Check if previous year had 53 weeks
+    dec31_prev <- as.Date(paste0(last_year, "-12-31"))
+    last_week_num <- isoweek(dec31_prev)
+  }
+  
+  # Calculate last week dates
+  last_week_start <- current_week_start - weeks(1)
+  last_week_end <- last_week_start + days(6)
+  
+  REPORT_DATE <- current_week_end + days(1)  # Set report date to day after week ends
+  
+  # Set report week variables for compatibility with other code
+  report_week_start <- current_week_end + days(1)  # Report week starts day after current week ends
+  report_week_num <- isoweek(report_week_start + days(3))
+  report_year <- isoyear(report_week_start + days(3))
+  
+} else {
+  # Automatic mode: Calculate from today's date
+  REPORT_DATE <- Sys.Date()  # Change this to lock to a specific date if needed
+  # REPORT_DATE <- as.Date("2025-10-30")  # Example: uncomment to use specific date
+  
+  # Calculate which week the REPORT_DATE falls into (ISO 8601: weeks start Sunday)
+  report_week_start <- floor_date(REPORT_DATE, "week", week_start = 7)  # 7 = Sunday
+  report_week_num <- isoweek(report_week_start)
+  report_year <- year(report_week_start)
+  
+  # The week we're REPORTING ON is the week PRIOR to the report week
+  current_week_start <- report_week_start - weeks(1)
+  current_week_end <- current_week_start + days(6)
+  # Use the middle of the week (Wednesday) to get accurate ISO week number
+  current_week_num <- isoweek(current_week_start + days(3))
+  current_year <- isoyear(current_week_start + days(3))
+  
+  # The COMPARISON week is one week before the current week
+  last_week_start <- current_week_start - weeks(1)
+  last_week_end <- last_week_start + days(6)
+  # Use the middle of the week (Wednesday) to get accurate ISO week number
+  last_week_num <- isoweek(last_week_start + days(3))
+  last_year <- isoyear(last_week_start + days(3))
+}
 
 # Store week numbers for use throughout the document
 WEEK_NUMBER <- current_week_num
@@ -526,13 +590,21 @@ DYNAMIC_TITLE <- paste0("Weekly Report: Week ", WEEK_NUMBER, " (",
 ```
 
 ```{r}
+#| label: display-week-info
+#| echo: false
+#| output: asis
+
+cat("\n## Week", WEEK_NUMBER, "from", WEEK_START_FORMATTED, "through", WEEK_END_FORMATTED, current_year, "\n\n")
+```
+
+```{r}
 #| label: global-options
 #| include: false
 #| cache: false
 
 # Global knitr options for faster renders and consistent behavior
 knitr::opts_chunk$set(
-  cache = TRUE,           # enable caching by default
+  cache = FALSE,          # disable caching to avoid path issues
   cache.lazy = FALSE,     # avoid lazy loading cache on Windows
   cache.path = paste0('cache/week-', WEEK_NUMBER, '/'),
   fig.retina = 1,         # smaller figures in HTML for speed
