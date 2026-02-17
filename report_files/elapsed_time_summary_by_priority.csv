@@ -1,33 +1,29 @@
 metric,Priority,N,Median,P90,Pct_le_15,Pct_le_20
-Phone Time,1,1,253,253,0,0
-Phone Time,2,257,196,423.2000000000001,13.2,13.2
-Phone Time,3,7,45,354.2000000000001,14.3,14.3
-Phone Time,4,774,119,404.10000000000014,34.5,34.6
-Phone Time,5,356,144,352,7.6,7.6
-Phone Time,6,354,153,438.4,5.9,5.9
-Phone Time,7,3,50,81.2,0,0
-Phone Time,8,56,0,0,98.2,98.2
-Processing Time,1,1,520,520,0,0
-Processing Time,2,323,60,145,20.4,21.1
-Processing Time,3,7,39,133.60000000000008,0,0
-Processing Time,4,774,122.5,766.7000000000019,30.9,31
-Processing Time,5,356,70.5,977.5,5.1,5.6
-Processing Time,6,355,804,6083.4,5.1,5.4
-Processing Time,7,3,23,45.39999999999999,33.3,33.3
-Processing Time,8,56,0,0,98.2,98.2
-Time to Dispatch,1,1,430,430,0,0
-Time to Dispatch,2,323,3,36,82.4,84.5
-Time to Dispatch,3,7,11,19.200000000000003,71.4,85.7
-Time to Dispatch,4,774,50,664.1000000000001,37.7,39.5
-Time to Dispatch,5,356,3,928,67.7,68.5
-Time to Dispatch,6,355,671,6050.4,18,19.4
-Time to Dispatch,7,3,1,1,100,100
-Time to Dispatch,8,56,0,0,100,100
-Time to Queue,1,1,90,90,0,0
-Time to Queue,2,323,47,110,22.3,23.5
-Time to Queue,3,7,28,118.20000000000006,28.6,28.6
-Time to Queue,4,774,39,160.70000000000005,35.5,37.9
-Time to Queue,5,356,52,124,7.6,10.1
-Time to Queue,6,355,66,205.20000000000027,7.9,10.4
-Time to Queue,7,3,22,44.4,33.3,33.3
-Time to Queue,8,56,0,0,98.2,98.2
+Phone Time,1,221,208,615,10,10
+Phone Time,2,1,50,50,0,0
+Phone Time,3,616,93.5,374,36.5,36.7
+Phone Time,4,305,147,348.0000000000001,8.2,8.5
+Phone Time,5,338,133,505.20000000000005,6.2,6.8
+Phone Time,6,1,17,17,0,100
+Phone Time,7,62,0,0,98.4,98.4
+Processing Time,1,310,67.5,175,5.5,6.1
+Processing Time,2,1,72,72,0,0
+Processing Time,3,616,123,933.5,35.1,35.2
+Processing Time,4,305,70,1182.8000000000015,6.2,8.2
+Processing Time,5,338,849,9192.000000000004,5.3,5.6
+Processing Time,6,1,17,17,0,100
+Processing Time,7,62,0,0,98.4,98.4
+Time to Dispatch,1,310,3,30,84.8,87.4
+Time to Dispatch,2,1,35,35,0,0
+Time to Dispatch,3,616,59,846.5,41.6,42.4
+Time to Dispatch,4,305,3,1098.2000000000003,68.9,69.5
+Time to Dispatch,5,338,779,9152.500000000004,16.9,17.5
+Time to Dispatch,6,1,0,0,100,100
+Time to Dispatch,7,62,0,0,98.4,98.4
+Time to Queue,1,310,60.5,158,7.4,8.4
+Time to Queue,2,1,37,37,0,0
+Time to Queue,3,616,33,125.5,38.5,41.2
+Time to Queue,4,305,53,121.80000000000007,9.8,13.8
+Time to Queue,5,338,63,195,9.5,14.5
+Time to Queue,6,1,17,17,0,100
+Time to Queue,7,62,0,0,100,100

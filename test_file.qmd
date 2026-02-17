@@ -1,7 +1,7 @@
 ---
 title: "DECC Weekly Report"
 author: "Tony Dunsworth, PhD"
-date: "2026-02-14"
+date: "2026-02-17"
 format:
     html:
         toc: true
@@ -226,7 +226,7 @@ suppressWarnings({
 # OPTION 2: Manual - Specify exact week number and year to analyze
 # Set USE_MANUAL_WEEK <- TRUE and set MANUAL_WEEK_NUM and MANUAL_WEEK_YEAR
 
-USE_MANUAL_WEEK <- TRUE        # Set to TRUE to manually specify week
+USE_MANUAL_WEEK <- FALSE        # Set to TRUE to manually specify week
 MANUAL_WEEK_NUM <- 6            # Week number to analyze (1-52)
 MANUAL_WEEK_YEAR <- 2026        # Year of the week to analyze
 
