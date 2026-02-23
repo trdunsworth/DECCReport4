@@ -1,29 +1,25 @@
 metric,Priority,N,Median,P90,Pct_le_15,Pct_le_20
-Phone Time,1,221,208,615,10,10
-Phone Time,2,1,50,50,0,0
-Phone Time,3,616,93.5,374,36.5,36.7
-Phone Time,4,305,147,348.0000000000001,8.2,8.5
-Phone Time,5,338,133,505.20000000000005,6.2,6.8
-Phone Time,6,1,17,17,0,100
-Phone Time,7,62,0,0,98.4,98.4
-Processing Time,1,310,67.5,175,5.5,6.1
-Processing Time,2,1,72,72,0,0
-Processing Time,3,616,123,933.5,35.1,35.2
-Processing Time,4,305,70,1182.8000000000015,6.2,8.2
-Processing Time,5,338,849,9192.000000000004,5.3,5.6
-Processing Time,6,1,17,17,0,100
-Processing Time,7,62,0,0,98.4,98.4
-Time to Dispatch,1,310,3,30,84.8,87.4
-Time to Dispatch,2,1,35,35,0,0
-Time to Dispatch,3,616,59,846.5,41.6,42.4
-Time to Dispatch,4,305,3,1098.2000000000003,68.9,69.5
-Time to Dispatch,5,338,779,9152.500000000004,16.9,17.5
-Time to Dispatch,6,1,0,0,100,100
-Time to Dispatch,7,62,0,0,98.4,98.4
-Time to Queue,1,310,60.5,158,7.4,8.4
-Time to Queue,2,1,37,37,0,0
-Time to Queue,3,616,33,125.5,38.5,41.2
-Time to Queue,4,305,53,121.80000000000007,9.8,13.8
-Time to Queue,5,338,63,195,9.5,14.5
-Time to Queue,6,1,17,17,0,100
-Time to Queue,7,62,0,0,100,100
+Phone Time,1,218,193.5,439,12.4,12.4
+Phone Time,2,689,112,385.20000000000005,33.8,34.1
+Phone Time,3,303,154,307.8,8.6,8.6
+Phone Time,4,320,140,463.5000000000001,5.3,5.6
+Phone Time,5,2,25.5,28.3,0,0
+Phone Time,6,64,0,0,95.3,95.3
+Processing Time,1,325,64,168,7.4,8
+Processing Time,2,689,133,1088.4000000000005,31.6,32.5
+Processing Time,3,303,68,950.0000000000003,7.3,7.6
+Processing Time,4,320,797.5,7641.0000000000055,4.1,5
+Processing Time,5,2,20,21.599999999999998,0,50
+Processing Time,6,64,0,0,95.3,95.3
+Time to Dispatch,1,325,3,24.600000000000023,86.8,89.2
+Time to Dispatch,2,689,66,994.0000000000002,36.4,38.2
+Time to Dispatch,3,303,3,870.4000000000001,71,71.3
+Time to Dispatch,4,320,711,7588.900000000006,17.5,18.8
+Time to Dispatch,5,2,1,1,100,100
+Time to Dispatch,6,64,0,0,96.9,96.9
+Time to Queue,1,325,59,150,9.2,10.8
+Time to Queue,2,689,36,126.20000000000005,35,38
+Time to Queue,3,303,55,127.00000000000006,9.2,10.2
+Time to Queue,4,320,63,192.5000000000001,8.4,11.9
+Time to Queue,5,2,19,20.6,0,50
+Time to Queue,6,64,0,0,95.3,95.3
