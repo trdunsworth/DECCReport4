@@ -1,7 +1,7 @@
 ---
 title: "DECC Weekly Report"
 author: "Tony Dunsworth, PhD"
-date: "2026-02-23"
+date: "2026-03-10"
 format:
     html:
         toc: true
@@ -249,11 +249,11 @@ if (USE_MANUAL_WEEK) {
   # Calculate the actual start/end dates for display purposes
   # ISO week 1 is the week containing the first Thursday of the year
   jan1 <- as.Date(paste0(MANUAL_WEEK_YEAR, "-01-01"))
-  jan1_dow <- wday(jan1, week_start = 7)  # 1 = Sunday, 7 = Saturday
+  jan1_dow <- wday(jan1, week_start=7)  # 1=Sunday, 7=Saturday
   
   # Find the first Sunday of ISO week 1
   days_to_first_sunday <- (7 - jan1_dow + 1) %% 7
-  if (wday(jan1 + days(4 - days_to_first_sunday), week_start = 7) == 5) {  # Check if Thursday is in first week
+  if (wday(jan1 + days(4 - days_to_first_sunday), week_start=7) == 5) {  # Check if Thursday is in first week
     first_sunday <- jan1 + days(days_to_first_sunday)
   } else {
     first_sunday <- jan1 + days(days_to_first_sunday + 7)
@@ -371,27 +371,27 @@ load_week_data <- function(week_num, week_year) {
   
   # Load the CSV file
   df <- tryCatch({
-    if (requireNamespace("vroom", quietly = TRUE)) {
+    if (requireNamespace("vroom", quietly=TRUE)) {
       as_tibble(vroom::vroom(
         data_file,
-        col_types = vroom::cols(.default = "c"),
-        na = c("", "NA", "NULL"),
-        progress = FALSE
+        col_types=vroom::cols(.default="c"),
+        na=c("", "NA", "NULL"),
+        progress=FALSE
       ))
     } else {
       readr::read_csv(
         data_file,
-        col_types = readr::cols(.default = readr::col_character()),
-        na = c("", "NA", "NULL"),
-        show_col_types = FALSE
+        col_types=readr::cols(.default=readr::col_character()),
+        na=c("", "NA", "NULL"),
+        show_col_types=FALSE
       )
     }
-  }, error = function(e) {
+  }, error=function(e) {
     readr::read_csv(
       data_file,
-      col_types = readr::cols(.default = readr::col_character()),
-      na = c("", "NA", "NULL"),
-      show_col_types = FALSE
+      col_types=readr::cols(.default=readr::col_character()),
+      na=c("", "NA", "NULL"),
+      show_col_types=FALSE
     )
   })
   
@@ -441,7 +441,7 @@ load_phone_data <- function(week_num, week_year) {
   
   if(is.null(data_file)) {
     warning("No phone data file found for week ", week_num, " (", week_year, "). Checked: ", 
-         paste(possible_files, collapse = ", "))
+         paste(possible_files, collapse=", "))
     return(NULL)
   }
   
@@ -449,27 +449,27 @@ load_phone_data <- function(week_num, week_year) {
   
   # Load the CSV file
   df <- tryCatch({
-    if (requireNamespace("vroom", quietly = TRUE)) {
+    if (requireNamespace("vroom", quietly=TRUE)) {
       as_tibble(vroom::vroom(
         data_file,
-        col_types = vroom::cols(.default = "c"),
-        na = c("", "NA", "NULL"),
-        progress = FALSE
+        col_types=vroom::cols(.default="c"),
+        na=c("", "NA", "NULL"),
+        progress=FALSE
       ))
     } else {
       readr::read_csv(
         data_file,
-        col_types = readr::cols(.default = readr::col_character()),
-        na = c("", "NA", "NULL"),
-        show_col_types = FALSE
+        col_types=readr::cols(.default=readr::col_character()),
+        na=c("", "NA", "NULL"),
+        show_col_types=FALSE
       )
     }
-  }, error = function(e) {
+  }, error=function(e) {
     readr::read_csv(
       data_file,
-      col_types = readr::cols(.default = readr::col_character()),
-      na = c("", "NA", "NULL"),
-      show_col_types = FALSE
+      col_types=readr::cols(.default=readr::col_character()),
+      na=c("", "NA", "NULL"),
+      show_col_types=FALSE
     )
   })
   

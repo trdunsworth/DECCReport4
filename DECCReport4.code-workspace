@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"name": "DECCReport4",
+			"path": "."
+		}
+	],
+	"settings": {
+		"positron.r.useNativePipe": true
+	}
+}
